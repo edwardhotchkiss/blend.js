@@ -21,14 +21,14 @@ module.exports = function(grunt) {
         browser: true
       },
       files: {
-        src: ['src/blend.js']
+        src: ['src/**/*.js']
       }
     },
     concat: {
       options: {
       },
       dist: {
-        src: ['src/blend.js'],
+        src: ['src/logger.js','src/blend.js'],
         dest: 'dist/blend-<%= pkg.version %>.js'
       }
     },

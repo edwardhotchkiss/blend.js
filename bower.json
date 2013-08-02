@@ -9,7 +9,7 @@
   "main": "dist/blend-0.1.0.min.js",
   "dependencies": {
     "jquery": ">=2.0.3",
-    "wrapper": "0.0.1"
+    "wrapper": ">=0.0.2"
   },
   "ignore": [
     "node_modules",

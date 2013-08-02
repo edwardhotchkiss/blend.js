@@ -40,15 +40,13 @@ wrapper('Logger', [], function() {
    * @description augment console with debug, main module object
    */
 
-  var Logger = {
-
+  return {
     log: function(args) {
       var log, message = args[0];
       args[0] = ('DEBUG [' + _padMilliseconds(_elapsed()) + '] > ') + message;
       log = Function.prototype.bind.call(console.log, console);
       log.apply(console, args);
     }
-
   };
   
 });
