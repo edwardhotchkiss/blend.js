@@ -18,7 +18,8 @@ module.exports = function(grunt) {
     },
     jshint: {
       options: {
-        browser: true
+        browser: true,
+        laxcomma: true
       },
       files: {
         src: ['src/**/*.js']
@@ -38,7 +39,7 @@ module.exports = function(grunt) {
           'Gruntfile.js',
           'src/**/*.js'
         ],
-        tasks: ['jshint','concat']
+        tasks: ['jshint']
       }
     }
   });
@@ -49,7 +50,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-watch');
 
   grunt.registerTask('build', ['jshint','concat','uglify']);
-  grunt.registerTask('default', ['jshint','concat','watch']);
+  grunt.registerTask('default', ['jshint','watch']);
 
 };
 

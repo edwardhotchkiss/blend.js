@@ -6,25 +6,15 @@
  * @license MIT
  */
 
-wrapper('Blend', ['Logger'], function(Logger) {
+(function(root) {
 
   'use strict';
 
   /**
-   * @constructor
+   * @private _startedAt
    */
 
-  var Blend = function Blend(params) {
-    _extend(this, params);
-    this.routes = [];
-    this.baseURL = this.baseURL || window.location;
-    this.hasPushstate = !!(window.history && window.history.pushState);
-    this.console = (typeof(window.console) === 'object');
-    $(function() {
-      this.onDOMReady();
-    }.bind(this));
-    return this;
-  };
+  var _startedAt = new Date().getTime();
 
   /**
    * @private _extend
@@ -37,9 +27,79 @@ wrapper('Blend', ['Logger'], function(Logger) {
     });
   }
 
-  String.prototype.trim = function() {
-    return this.replace(/^\s+|\s+$/g, '');
-  };
+  /**
+   * @private _padMilliseconds
+   * @description pads timer with up to six zeroes
+   */
+
+  function _padMilliseconds(ms) {
+    var max = '00000000';
+    return (max + ms).slice(-(max.length));
+  }
+
+  /**
+   * @private _elapsed
+   */
+
+  function _elapsed() {
+    return (new Date().getTime() - _startedAt);
+  }
+
+  /**
+   * @private _stampMessage
+   */
+
+  function _stampMessage(args) {
+    var message = args[0];
+    args[0] = ('DEBUG [' + _padMilliseconds(_elapsed()) + '] > ') + message;
+    return args;
+  }
+
+  /**
+   * @private _consoled
+   */
+
+  function _consoled(level) {
+    return function() {
+      if (typeof(window.console) === 'object') {
+        var args = Array.prototype.slice.call(arguments)
+          , fn = Function.prototype.bind.call(console[level], console);
+        fn.apply(console, _stampMessage(args));
+      }
+    };
+  }
+
+  /**
+   * @private _createPathRE
+   */
+
+  function _createPathRE(path) {
+    var pathRE; 
+    if (path instanceof RegExp) {
+      return path;
+    }
+    return new RegExp('^'+path+'\/*$');
+  }
+
+  /**
+   * @private _log
+   */
+
+  var _log = _consoled('log');
+
+  /**
+   * @constructor
+   */
+
+  function Blend(params) {
+    _extend(this, params);
+    this.routes = [];
+    this.pushState = this.pushState || true;
+    document.addEventListener('DOMContentLoaded', function() {
+      this.start();
+    }.bind(this));
+    return this;
+  }
 
   /**
    * @description instance methods
@@ -48,44 +108,56 @@ wrapper('Blend', ['Logger'], function(Logger) {
   Blend.prototype = {
 
     /**
-     * @public DOMReady
+     * @list console debug helpers
      */
 
-    onDOMReady: function() {
-      var context = this;
-      this.navigate(this.getPath());
-      $('a').on('click', function(evt) {
-        var pathname = evt.target.pathname;
-        if (pathname !== undefined) {
-          evt.preventDefault();
-          context.navigate(pathname);
-        }
-      });
+    log: _log,
+
+    /**
+     * @method on
+     * @param {String} name event name
+     * @param {Function} fn trigger function to store
+     * @description bind function to event name
+     */
+
+    on: function(name, fn) {
+      this.listeners[name] = this.listeners[name] || [];
+      this.listeners[name].push(fn);
       return this;
     },
 
     /**
-     * @public log
-     * @description console.log helper
+     * @method off
+     * @param {String} name event name
+     * @description remove event listener
      */
 
-    log: function(msg) {
-      Logger.log(arguments);
+    off: function(name) {
+      if (this.listeners[name]) {
+        delete this.listeners[name];
+      }
       return this;
     },
 
     /**
-     * @public getEventPathname
-     * @description get path to navigate to
-     * @param {Object} evt passed event object
+     * @method trigger
+     * @param {String} name Event name
+     * @description trigger event listener
      */
 
-    getEventPathname: function(evt) {
-      return evt.target.pathname || '/';
+    trigger: function(name) {
+      if (!this.listeners[name]) {
+        return this;
+      }
+      var args = Array.prototype.slice.call(arguments, 1);
+      this.listeners[name].forEach(function(val, index, arr) {
+        val.apply(this, args);
+      }, this);
+      return this;
     },
 
     /**
-     * @public getHash
+     * @method getHash
      * @description get current window hash
      */
 
@@ -95,7 +167,7 @@ wrapper('Blend', ['Logger'], function(Logger) {
     },
 
     /**
-     * @public setHash
+     * @method setHash
      * @description set window hash
      * @param {String} path hash to set as pathname
      */
@@ -109,7 +181,7 @@ wrapper('Blend', ['Logger'], function(Logger) {
     },
   
     /**
-     * @public getPath
+     * @method getPath
      * @description get current /path
      */
 
@@ -118,13 +190,13 @@ wrapper('Blend', ['Logger'], function(Logger) {
     },
 
     /**
-     * @public findRoute
+     * @method findRoute
      * @description match Route Object based on pathname
      */
 
     findRoute: function(path) {
       var matches = [], route, key;
-      if (this.hasPushstate !== true) {
+      if (!this.pushState) {
         path = '/' + path;
       }
       for (key in this.routes) {
@@ -142,61 +214,81 @@ wrapper('Blend', ['Logger'], function(Logger) {
     },
   
     /**
-     * @public navigate
+     * @method navigate
      * @description Navigate to a specified path (HTML5 pushState)
      */
 
     navigate: function(path) {
       var state = this.findRoute(path);
       if (state !== undefined) {
-        if (this.hasPushstate) {
+        if (this.pushState) {
           window.history.pushState(null, document.title, path);
-          state.callback.call(this);
+          state.handler.call(this);
         } else {
           this.setHash(path);
-          state.callback.call(this);
+          state.handler.call(this);
         }
       } else {
-        Logger.log('Error 404.');
+        this.log('Error 404.');
       }
     },
 
     /**
-     * @public get
-     * @param {String} path Path to route for a GET
-     * @param {Function} callback Method to execute on pathname match
+     * @method get
+     * @param {String} path GET path to route
+     * @param {Function} handler Method to execute on path match
      */
 
-    get: function(path, callback) {
-      path = (path instanceof RegExp) ? path : new RegExp(path, 'i');
-      callback = callback || function () {};
+    get: function(path, handler) {
+      if (typeof(handler) !== 'function') {
+        throw new Error('must define a route handler!');
+      }
       this.routes.push({
-        path     : path,
-        callback : callback
+        path    : _createPathRE(path),
+        handler : handler
       });
       return this;
     },
 
     /**
-     * @public Controller
-     * @description Setup an OOP blend.js controller
-     * @return {Object} _Controller blend.js controller
+     * @method controller
      */
 
-    controller: function (methods) {
+    controller: function(methods) {
       if (typeof methods === 'object') {
         return _extend(this, params);
       }
+    },
+
+    /**
+     * @method start
+     */
+
+    start: function() {
+      var links, context = this;
+      this.navigate(this.getPath());
+      links = document.getElementsByTagName('a');
+      Array.prototype.slice.call(links).forEach(function(anchor, index, arr) {
+        anchor.addEventListener('click', function(evt) {
+          evt.preventDefault();
+          if (evt.currentTarget.host !== window.location.host) {
+            window.open(evt.currentTarget.href, '_blank');
+          } else if (evt.currentTarget.pathname !== undefined) {
+            context.navigate(evt.currentTarget.pathname);
+          } else {
+            window.open(evt.currentTarget.href, '_blank');
+          }
+        }, false);
+      });
+      return this;
     }
 
   };
 
   /**
-   * @description AMD || attach to root (window)
+   * @description attach
    */
 
-  return Blend;
+  root.Blend = Blend;
 
-});
-
-/* EOF */
+}(window));
