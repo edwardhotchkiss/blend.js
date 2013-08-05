@@ -5,17 +5,22 @@
     pushState : true
   })
 
-  .get('/', function(request) {
+  .get('/', function() {
     this.log('route hit: "%s"', this.getPath());
   })
 
-  .get('/about', function(request) {
+  .get('/about', function() {
     this.log('route hit: "%s"', this.getPath());
   })
 
-  .get('/blog/:article-title', function(request) {
+  .get('/blog/:title', function(title) {
     this.log('route hit: "%s"', this.getPath());
-    this.log('dynamic blog title: "%s"', request['article-title']);
+    this.log('dynamic blog title: "%s"', title);
+  })
+
+  .get('/blog/:category/:title', function(category, title) {
+    this.log('route hit: "%s"', this.getPath());
+    this.log('dynamic /blog/ :category "%s", :title: "%s"', category, title);
   })
 
 }(window));

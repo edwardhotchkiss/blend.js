@@ -70,15 +70,29 @@
   }
 
   /**
+   * @private _dynamicPathRE
+   */
+
+  var _dynamicRE = /:([\w\d]+)/g;
+
+  /**
+   * @private _dynamicPathReplace
+   */
+
+  var _dynamicPathReplace = '([^\/]+)';
+
+  /**
    * @private _createPathRE
    */
 
   function _createPathRE(path) {
-    var pathRE; 
+    var str;
     if (path instanceof RegExp) {
       return path;
+    } else {
+      str = path.replace(_dynamicRE, _dynamicPathReplace);
     }
-    return new RegExp('^'+path+'\/*$');
+    return new RegExp('^' + str + '\/*$');
   }
 
   /**
@@ -195,22 +209,29 @@
      */
 
     findRoute: function(path) {
-      var matches = [], route, key;
+      var results, matches, params = [];
       if (!this.pushState) {
         path = '/' + path;
       }
-      for (key in this.routes) {
-        if (this.routes.hasOwnProperty(key)) {
-          route = this.routes[key];
-          if (route.path.test(path)) {
-            matches.push(route);
+      this.routes.forEach(function(item, index, routes) {
+        if (item.path.test(path)) {
+          matches = path.match(item.path) || [];
+          if (matches && matches.length >= 2) {
+            matches.splice(0, 1);
+            matches.map(function(param, index) {
+              params[index] = param;
+            });
+          } else {
+            params = [];
           }
+          results = {
+            path    : path,
+            params  : params,
+            handler : item.handler
+          };
         }
-      }
-      if (matches) {
-        return (matches.length > 1) ? matches.pop() : matches[0];
-      }
-      return this;
+      });
+      return results;
     },
   
     /**
@@ -222,15 +243,16 @@
       var state = this.findRoute(path);
       if (state !== undefined) {
         if (this.pushState) {
-          window.history.pushState(null, document.title, path);
-          state.handler.call(this);
+          window.history.pushState(null, '', path);
+          state.handler.apply(this, state.params);
         } else {
           this.setHash(path);
-          state.handler.call(this);
+          state.handler.apply(this, state.params);
         }
       } else {
         this.log('Error 404.');
       }
+      return this;
     },
 
     /**
@@ -258,6 +280,7 @@
       if (typeof methods === 'object') {
         return _extend(this, params);
       }
+      return this;
     },
 
     /**
