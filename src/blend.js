@@ -218,7 +218,7 @@
           matches = path.match(item.path) || [];
           if (matches && matches.length >= 2) {
             matches.splice(0, 1);
-            matches.map(function(param, index) {
+            matches.forEach(function(param, index) {
               params[index] = param;
             });
           } else {
