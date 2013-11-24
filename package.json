@@ -1,15 +1,15 @@
 {
   "name": "blend.js",
-  "author": "Edward Hotchkiss <edward@candidblend.la>",
+  "author": "Edward Hotchkiss <edward@hotchkiss.com>",
   "description": "HTML5 Router with Minimal MV(.*?) Architecture",
   "version": "0.1.0",
   "repository":{
     "type": "git",
-    "url": "git://github.com/CandidBlend/blend.js.git"
+    "url": "git://github.com/edwardhotchkiss/blend.js.git"
   },
-  "homepage": "https://github.com/CandidBlend/blend.js",
+  "homepage": "https://github.com/edwardhotchkiss/blend.js",
   "contributors": [
-    { "name": "Edward Hotchkiss","email": "edward@candidblend.la" }
+    { "name": "Edward Hotchkiss","email": "edward@edwardhotchkiss.com" }
   ],
   "devDependencies":{
     "grunt": "0.4.1",
@@ -21,6 +21,6 @@
   },
   "licenses":[{
     "type":"MIT",
-    "url":"http://github.com/CandidBlend/blend.js/LICENSE"
+    "url":"http://github.com/edwardhotchkiss/blend.js/LICENSE"
   }]
 }
