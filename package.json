@@ -1,6 +1,6 @@
 {
   "name": "blend.js",
-  "author": "Edward Hotchkiss <edward@hotchkiss.com>",
+  "author": "Edward Hotchkiss <edward@edwardhotchkiss.com>",
   "description": "HTML5 Router with Minimal MV(.*?) Architecture",
   "version": "0.1.0",
   "repository":{
